@@ -1,6 +1,8 @@
+Phần mềm này được phát triển có sử dụng Virtual Display Driver: https://github.com/VirtualDrivers/Virtual-Display-Driver
+
 Các bước cài đặt và sử dụng:
 
-Lưu ý, vui lòng bật chế độ gỡ lỗi bên trong cài đặt nhà phát triển.
+! Lưu ý, vui lòng bật chế độ gỡ lỗi bên trong cài đặt nhà phát triển trên điện thoại.
 
 1. Chạy setup_pc.bat để cài đặt python và VDD.
 2. Sau khi chạy, nhấn install driver. ![Minh họa](image.png)
