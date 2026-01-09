@@ -7,6 +7,8 @@ echo   SECOND SCREEN - AUTO START
 echo ============================================================
 echo.
 
+
+
 REM === Check ADB ===
 echo [1/4] Checking ADB...
 where adb >nul 2>nul
