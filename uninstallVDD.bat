@@ -32,29 +32,22 @@ if not defined DEVCON_PATH (
 )
 
 echo [1/2] Using devcon: %DEVCON_PATH%
-echo        Searching for devices with name containing "Virtual Display"...
+echo        Removing Virtual Display Driver devices...
+echo.
 
-setlocal enabledelayedexpansion
-set "FOUND=0"
+REM --- Gỡ trực tiếp bằng Hardware ID patterns ---
+echo   Removing ROOT\DISPLAY devices...
+"%DEVCON_PATH%" remove "ROOT\DISPLAY\*"
 
-for /f "usebackq tokens=1,* delims=:" %%A in (`"%DEVCON_PATH%" find * 2^>nul ^| findstr /I "Virtual Display"`) do (
-	set "ID=%%A"
-	set "NAME=%%B"
-	set "ID=!ID: =!"
-	set "FOUND=1"
-	echo.
-	echo   Found: !ID! :!NAME!
-	echo   Removing device !ID! ...
-	"%DEVCON_PATH%" remove "@!ID!"
-)
+echo.
+echo   Removing MTT1337 display devices...
+"%DEVCON_PATH%" remove "DISPLAY\MTT1337\*"
 
-if !FOUND! == 0 (
-	echo.
-	echo [INFO] No device with name containing "Virtual Display" was found.
-	echo        The driver may already be removed, or has a different name.
-)
+echo.
+echo   Removing MttVDD driver...
+"%DEVCON_PATH%" remove "*MttVDD*"
 
-endlocal
+echo.
 
 :done
 echo.
