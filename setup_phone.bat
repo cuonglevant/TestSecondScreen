@@ -3,6 +3,8 @@ cd /d "%~dp0"
 echo === Setup ADB Reverse for Second Screen ===
 echo.
 
+pause 
+
 REM Check ADB
 where adb >nul 2>nul
 if %errorlevel% neq 0 (
@@ -14,7 +16,7 @@ if %errorlevel% neq 0 (
         if %errorlevel% neq 0 (
             echo [ERROR] Failed to extract adb.zip.
             pause
-            exit /b 1
+            
         )
 
         echo [2/2] Adding local platform-tools to PATH...
@@ -26,15 +28,17 @@ if %errorlevel% neq 0 (
             echo [ERROR] ADB still not found after extracting adb.zip.
             echo        Please check that adb.zip contains a platform-tools folder.
             pause
-            exit /b 1
+            
         )
     ) else (
         echo [ERROR] adb.zip not found in this folder.
         echo         Please place adb.zip (Android SDK Platform Tools) next to this script.
         pause
-        exit /b 1
+        
     )
 )
+
+pause
 
 echo Setting up port forwarding...
 adb reverse tcp:8080 tcp:8080

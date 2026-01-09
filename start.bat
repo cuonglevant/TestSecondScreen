@@ -51,6 +51,22 @@ if %errorlevel% neq 0 (
 echo [OK] ADB reverse configured.
 echo.
 
+echo Installing Android app on connected device...
+if exist "app-release.apk" (
+    echo   Found app-release.apk, installing with ADB...
+    adb install -r "app-release.apk"
+    if %errorlevel% neq 0 (
+        echo [WARNING] Failed to install app-release.apk.
+        echo          Check that your phone is connected with USB debugging enabled.
+    ) else (
+        echo [OK] app-release.apk installed successfully.
+    )
+) else (
+    echo [WARNING] app-release.apk not found in this folder. Skipping app install.
+)
+
+echo.
+
 echo ============================================================
 echo   Starting Second Screen Server...
 echo ============================================================

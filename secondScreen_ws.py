@@ -164,23 +164,66 @@ class ScreenCapture:
         
         if use_dxcam and HAS_DXCAM:
             try:
-                # Lấy thông tin outputs
-                outputs_info = str(dxcam.output_info())
-                print(f"dxcam outputs: {outputs_info}")
+                # dxcam.output_info() trả về string, không phải list
+                # Cần parse hoặc probe để tìm devices/outputs có sẵn
+                outputs_str = str(dxcam.output_info())
+                print(f"dxcam outputs:\n{outputs_str}")
                 
-                # Xác định device và output index
-                # Device[0] = Intel UHD (primary), Device[1] = NVIDIA (virtual display)
-                # Mặc định dùng Device[1] Output[0] cho virtual display
-                if monitor_index and monitor_index >= 2:
-                    # User chỉ định monitor 2 -> dùng NVIDIA (device 1)
-                    dxcam_device = 1
-                    dxcam_output = 0
+                # Probe để tìm tất cả devices và outputs có sẵn
+                # Thử tạo camera với device_idx tăng dần cho đến khi lỗi
+                output_mapping = []
+                for dev_idx in range(10):  # Tối đa 10 devices
+                    for out_idx in range(10):  # Tối đa 10 outputs per device
+                        try:
+                            # Thử tạo camera để kiểm tra device/output có tồn tại
+                            test_cam = dxcam.create(
+                                device_idx=dev_idx,
+                                output_idx=out_idx,
+                                output_color="BGR"
+                            )
+                            if test_cam is not None:
+                                # Lấy thông tin về output này
+                                output_mapping.append((dev_idx, out_idx))
+                                # Đóng camera test
+                                del test_cam
+                                # dxcam có thể cache, cần reset
+                                import gc
+                                gc.collect()
+                        except Exception:
+                            # Không có output này, thử output tiếp theo
+                            if out_idx == 0:
+                                # Nếu output 0 không tồn tại, device này không có
+                                break
+                            continue
+                    # Nếu device này không có output nào, dừng probe devices
+                    if not any(d == dev_idx for d, o in output_mapping):
+                        if dev_idx > 0:
+                            break
+                
+                # Nếu probe không tìm được gì, thử mặc định device 0, output 0
+                if not output_mapping:
+                    output_mapping = [(0, 0)]
+                
+                print(f"dxcam: Found {len(output_mapping)} output(s):")
+                for i, (dev, out) in enumerate(output_mapping):
+                    print(f"  [{i}] Device[{dev}] Output[{out}]")
+                
+                # Chọn device và output dựa trên monitor_index
+                # monitor_index từ mss: 0=all, 1=primary, 2=secondary, ...
+                # Mapping: monitor_index N (với N >= 1) -> output N-1 trong danh sách
+                if monitor_index is not None and monitor_index >= 1:
+                    target_output_idx = monitor_index - 1  # mss index 1 -> output 0
                 else:
-                    # Mặc định dùng primary (device 0)
-                    dxcam_device = 0
-                    dxcam_output = 0
+                    target_output_idx = 0  # Mặc định output đầu tiên (primary)
                 
-                print(f"dxcam: Trying device_idx={dxcam_device}, output_idx={dxcam_output}")
+                # Giới hạn trong phạm vi có sẵn
+                if target_output_idx >= len(output_mapping):
+                    target_output_idx = len(output_mapping) - 1
+                    print(f"dxcam: Requested output not available, using output {target_output_idx}")
+                
+                dxcam_device, dxcam_output = output_mapping[target_output_idx]
+                
+                print(f"dxcam: Using Device[{dxcam_device}] Output[{dxcam_output}]")
                 
                 self._dxcam_camera = dxcam.create(
                     device_idx=dxcam_device,
@@ -194,6 +237,8 @@ class ScreenCapture:
                 print(f"✅ D3D11 Desktop Duplication (dxcam) initialized - Device {dxcam_device}, Output {dxcam_output}")
             except Exception as e:
                 print(f"⚠️  dxcam initialization failed: {e}")
+                import traceback
+                traceback.print_exc()
                 print("   Falling back to mss...")
                 self._dxcam_camera = None
                 self._use_dxcam = False
